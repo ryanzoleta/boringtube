@@ -1,4 +1,5 @@
 import { prisma } from '$lib/data/prisma';
+import { getAccount, getUser } from '$lib/data/queries';
 import type { Subscription } from '$lib/types';
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import axios from 'axios';
@@ -10,25 +11,15 @@ export async function load({ locals }: RequestEvent) {
     throw redirect(303, '/');
   }
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session.user?.email
-    }
-  });
+  const user = await getUser(session);
 
   if (!user?.id) {
     throw redirect(303, '/');
   }
 
-  const account = (
-    await prisma.account.findMany({
-      where: {
-        userId: user?.id
-      }
-    })
-  )[0];
+  const account = await getAccount(user);
 
-  if (!account.access_token) {
+  if (!account?.access_token) {
     throw redirect(303, '/');
   }
 

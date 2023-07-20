@@ -37,6 +37,8 @@
 		"@auth/core": "^0.10.0",
 		"@auth/prisma-adapter": "^1.0.1",
 		"@auth/sveltekit": "^0.3.6",
-		"axios": "^1.4.0"
+		"@tanstack/svelte-query": "^4.29.25",
+		"axios": "^1.4.0",
+		"moment": "^2.29.4"
 	}
 }
