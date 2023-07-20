@@ -62,6 +62,7 @@
   });
 
   function archiveVideo(videoId: string) {
+    playing = false;
     currentVideo = undefined;
     archivedVideoIds.push(videoId);
     $videosQuery.refetch();
