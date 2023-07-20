@@ -49,7 +49,7 @@
         return a.published.localeCompare(b.published) * -1;
       });
 
-      currentVideo = videos[0];
+      if (!currentVideo) currentVideo = videos[0];
 
       return videos;
     }
@@ -67,18 +67,18 @@
       </div>
     {/each}
   </div>
-  <div class="flex w-3/12 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
+  <div class="flex w-1/5 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
     {#if $videosQuery.isLoading}
       <p>Loading...</p>
     {:else if $videosQuery.data}
       {#each $videosQuery.data as video}
         <button
-          class="flex rounded-lg border border-zinc-900 bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
+          class="flex flex-col rounded-lg bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
           on:click={() => {
             currentVideo = video;
           }}>
-          <img src={video.thumbnail} alt="video thumbnail" class="w-6/12 rounded-l-md" />
-          <div class="flex flex-col gap-1 px-2 pt-1">
+          <img src={video.thumbnail} alt="video thumbnail" class="w-full rounded-t-md" />
+          <div class="flex flex-col gap-1 p-3">
             <h3 class="line-clamp-2 font-bold leading-tight">{video.title}</h3>
             <div class="flex gap-1">
               <div class="w-5">
@@ -104,6 +104,7 @@
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         class="h-4/5 w-full"
         allowFullScreen />
+      <!-- <img src={currentVideo.thumbnail} alt="video thumbnail" class="h-4/5 w-full" /> -->
       <h2 class="mt-3 text-2xl font-bold text-white">{currentVideo.title}</h2>
       <div class="mt-2 flex gap-2">
         <div class="w-14">
