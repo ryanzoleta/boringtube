@@ -13,7 +13,7 @@
   const videosQuery = createQuery({
     queryKey: ['feed'],
     queryFn: async () => {
-      const videos = [];
+      let videos = [];
 
       for (const channel of subscriptions) {
         const rssResponse = await axios.get(
@@ -26,19 +26,28 @@
 
         for (const entry of entries) {
           const videoId = entry.getElementsByTagName('yt:videoId')[0].innerHTML;
+          const published = moment(entry.getElementsByTagName('published')[0].innerHTML);
 
-          videos.push({
-            id: videoId,
-            title: entry.getElementsByTagName('title')[0].innerHTML,
-            url: `https://www.youtube.com/watch?v=${videoId}`,
-            thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
-            channel: channel,
-            published: entry.getElementsByTagName('published')[0].innerHTML
-          });
+          const daysOld = moment().diff(published, 'days');
+
+          if (daysOld < 3) {
+            videos.push({
+              id: videoId,
+              title: entry.getElementsByTagName('title')[0].innerHTML,
+              url: `https://www.youtube.com/watch?v=${videoId}`,
+              thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
+              channel: channel,
+              published: entry.getElementsByTagName('published')[0].innerHTML
+            });
+          } else {
+            break;
+          }
         }
-
-        break;
       }
+
+      videos = videos.sort((a, b) => {
+        return a.published.localeCompare(b.published) * -1;
+      });
 
       currentVideo = videos[0];
 
