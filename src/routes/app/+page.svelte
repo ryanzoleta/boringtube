@@ -8,6 +8,7 @@
 
   let currentVideo: Video | undefined;
   let archivedVideoIds: string[] = [];
+  let playing = false;
 
   const { subscriptions }: { subscriptions: Subscription[] } = data;
 
@@ -86,6 +87,7 @@
         <button
           class="group relative flex flex-col rounded-lg bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
           on:click={() => {
+            playing = false;
             currentVideo = video;
           }}>
           <img src={video.thumbnail} alt="video thumbnail" class="w-full rounded-t-md" />
@@ -125,16 +127,40 @@
       {/each}
     {/if}
   </div>
-  <div class="flex-1 bg-zinc-950">
+  <div class="relative flex-1 bg-zinc-950">
     {#if currentVideo}
-      <iframe
-        src={`https://www.youtube.com/embed/${currentVideo.id}`}
-        title="YouTube video player"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        class="h-4/5 w-full"
-        allowFullScreen />
-      <!-- <img src={currentVideo.thumbnail} alt="video thumbnail" class="h-4/5 w-full" /> -->
+      {#if playing}
+        <iframe
+          src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1`}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          class="h-4/5 w-full"
+          allowFullScreen />
+      {:else}
+        <img src={currentVideo.thumbnail} alt="video thumbnail" class="h-4/5 w-full" />
+        <button
+          class="absolute top-0 h-4/5 w-full bg-black opacity-70"
+          on:click={() => {
+            playing = true;
+          }}>
+          <div class=" m-auto h-full w-2/12">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="h-full w-full fill-zinc-700 text-zinc-700">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+            </svg>
+          </div>
+        </button>
+      {/if}
+
       <div class="mr-10 mt-3 flex place-content-between">
         <h2 class="flex-1 text-2xl font-bold text-white">{currentVideo.title}</h2>
         <button
