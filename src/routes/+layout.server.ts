@@ -10,27 +10,29 @@ import axios from 'axios';
 export const load: LayoutServerLoad = async ({ locals }: RequestEvent) => {
   const session = await locals.getSession();
 
-  const user = await getUser(session as Session);
-  const account = await getAccount(user as User);
+  if (session) {
+    const user = await getUser(session as Session);
+    const account = await getAccount(user as User);
 
-  if (account?.expires_at) {
-    const tokenExpiry = moment(account?.expires_at * 1000);
-    const now = moment();
+    if (account?.expires_at) {
+      const tokenExpiry = moment(account?.expires_at * 1000);
+      const now = moment();
 
-    if (now.isAfter(tokenExpiry)) {
-      const data = {
-        refresh_token: account?.refresh_token,
-        client_id: env.GOOGLE_CLIENT_ID,
-        client_secret: env.GOOGLE_CLIENT_SECRET,
-        grant_type: 'refresh_token'
-      };
+      if (now.isAfter(tokenExpiry)) {
+        const data = {
+          refresh_token: account?.refresh_token,
+          client_id: env.GOOGLE_CLIENT_ID,
+          client_secret: env.GOOGLE_CLIENT_SECRET,
+          grant_type: 'refresh_token'
+        };
 
-      const response = await axios.post('https://oauth2.googleapis.com/token', data);
+        const response = await axios.post('https://oauth2.googleapis.com/token', data);
 
-      const accessToken = response.data.access_token;
-      const expiresAt = Math.floor(Date.now() / 1000 + response.data.expires_in);
+        const accessToken = response.data.access_token;
+        const expiresAt = Math.floor(Date.now() / 1000 + response.data.expires_in);
 
-      await updateAccountRefreshToken(account.id, accessToken, expiresAt);
+        await updateAccountRefreshToken(account.id, accessToken, expiresAt);
+      }
     }
   }
 

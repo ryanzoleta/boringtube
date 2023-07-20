@@ -24,3 +24,12 @@ export type Subscription = {
     };
   };
 };
+
+export type Video = {
+  id: string;
+  title: string;
+  url: string;
+  thumbnail: string;
+  channel: Subscription;
+  published: string;
+};

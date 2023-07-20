@@ -1,9 +1,12 @@
 <script lang="ts">
-  import type { Subscription } from '$lib/types.js';
+  import type { Subscription, Video } from '$lib/types.js';
   import { createQuery } from '@tanstack/svelte-query';
   import axios from 'axios';
+  import moment from 'moment';
 
   export let data;
+
+  let currentVideo: Video;
 
   const { subscriptions }: { subscriptions: Subscription[] } = data;
 
@@ -22,18 +25,22 @@
         const entries = xml.querySelectorAll('entry');
 
         for (const entry of entries) {
+          const videoId = entry.getElementsByTagName('yt:videoId')[0].innerHTML;
+
           videos.push({
-            id: entry.getElementsByTagName('yt:videoId')[0].innerHTML,
+            id: videoId,
             title: entry.getElementsByTagName('title')[0].innerHTML,
-            url: `https://www.youtube.com/watch?v=${
-              entry.getElementsByTagName('yt:videoId')[0].innerHTML
-            }`,
-            thumbnail: entry.getElementsByTagName('media:thumbnail')[0].getAttribute('url')
+            url: `https://www.youtube.com/watch?v=${videoId}`,
+            thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
+            channel: channel,
+            published: entry.getElementsByTagName('published')[0].innerHTML
           });
         }
 
         break;
       }
+
+      currentVideo = videos[0];
 
       return videos;
     }
@@ -41,7 +48,7 @@
 </script>
 
 <div class="flex max-h-screen min-h-screen bg-zinc-950">
-  <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-800 px-3 py-3">
+  <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
     {#each subscriptions as subscription}
       <div>
         <img
@@ -51,16 +58,56 @@
       </div>
     {/each}
   </div>
-  <div class="w-3/12 overflow-scroll bg-zinc-900">
+  <div class="flex w-3/12 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
     {#if $videosQuery.isLoading}
       <p>Loading...</p>
     {:else if $videosQuery.data}
       {#each $videosQuery.data as video}
-        <div>
-          <img src={video.thumbnail} alt="video thumbnail" />
-        </div>
+        <button
+          class="flex rounded-lg border border-zinc-900 bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
+          on:click={() => {
+            currentVideo = video;
+          }}>
+          <img src={video.thumbnail} alt="video thumbnail" class="w-6/12 rounded-l-md" />
+          <div class="flex flex-col gap-1 px-2 pt-1">
+            <h3 class="line-clamp-2 font-bold leading-tight">{video.title}</h3>
+            <div class="flex gap-1">
+              <div class="w-5">
+                <img
+                  src={video.channel.snippet.thumbnails.default.url}
+                  alt="channel avatar"
+                  class="rounded-full" />
+              </div>
+              <p class="text-xs text-zinc-500">{video.channel.snippet.title}</p>
+            </div>
+            <p class="text-xs text-zinc-500">{moment(video.published).fromNow()}</p>
+          </div>
+        </button>
       {/each}
     {/if}
   </div>
-  <div class="w-">video</div>
+  <div class="flex-1 bg-zinc-950">
+    {#if currentVideo}
+      <iframe
+        src={`https://www.youtube.com/embed/${currentVideo.id}`}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        class="h-4/5 w-full"
+        allowFullScreen />
+      <h2 class="mt-3 text-2xl font-bold text-white">{currentVideo.title}</h2>
+      <div class="mt-2 flex gap-2">
+        <div class="w-14">
+          <img
+            src={currentVideo.channel.snippet.thumbnails.default.url}
+            alt="channel avatar"
+            class="rounded-full" />
+        </div>
+        <div>
+          <p class="text-lg font-bold text-zinc-400">{currentVideo.channel.snippet.title}</p>
+          <p class="text-zinc-500">{moment(currentVideo.published).fromNow()}</p>
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
