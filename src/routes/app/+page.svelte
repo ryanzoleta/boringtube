@@ -6,7 +6,8 @@
 
   export let data;
 
-  let currentVideo: Video;
+  let currentVideo: Video | undefined;
+  let archivedVideoIds: string[] = [];
 
   const { subscriptions }: { subscriptions: Subscription[] } = data;
 
@@ -27,6 +28,10 @@
         for (const entry of entries) {
           const videoId = entry.getElementsByTagName('yt:videoId')[0].innerHTML;
           const published = moment(entry.getElementsByTagName('published')[0].innerHTML);
+
+          if (archivedVideoIds.includes(videoId)) {
+            continue;
+          }
 
           const daysOld = moment().diff(published, 'days');
 
@@ -54,6 +59,12 @@
       return videos;
     }
   });
+
+  function archiveVideo(videoId: string) {
+    currentVideo = undefined;
+    archivedVideoIds.push(videoId);
+    $videosQuery.refetch();
+  }
 </script>
 
 <div class="flex max-h-screen min-h-screen bg-zinc-950">
@@ -73,7 +84,7 @@
     {:else if $videosQuery.data}
       {#each $videosQuery.data as video}
         <button
-          class="flex flex-col rounded-lg bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
+          class="group relative flex flex-col rounded-lg bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
           on:click={() => {
             currentVideo = video;
           }}>
@@ -87,10 +98,29 @@
                   alt="channel avatar"
                   class="rounded-full" />
               </div>
-              <p class="text-xs text-zinc-500">{video.channel.snippet.title}</p>
+              <p class="my-auto text-xs text-zinc-500">
+                {video.channel.snippet.title} • {moment(video.published).fromNow()}
+              </p>
             </div>
-            <p class="text-xs text-zinc-500">{moment(video.published).fromNow()}</p>
           </div>
+          <button
+            class="absolute bottom-2 right-2 hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
+            on:click|stopPropagation={() => {
+              archiveVideo(video.id);
+            }}
+            ><svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="h-full w-full">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+          </button>
         </button>
       {/each}
     {/if}
@@ -105,7 +135,14 @@
         class="h-4/5 w-full"
         allowFullScreen />
       <!-- <img src={currentVideo.thumbnail} alt="video thumbnail" class="h-4/5 w-full" /> -->
-      <h2 class="mt-3 text-2xl font-bold text-white">{currentVideo.title}</h2>
+      <div class="mr-10 mt-3 flex place-content-between">
+        <h2 class="flex-1 text-2xl font-bold text-white">{currentVideo.title}</h2>
+        <button
+          class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
+          on:click={() => {
+            if (currentVideo) archiveVideo(currentVideo.id);
+          }}>Archive</button>
+      </div>
       <div class="mt-2 flex gap-2">
         <div class="w-14">
           <img
