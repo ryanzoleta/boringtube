@@ -7,8 +7,12 @@
   export let data;
 
   let currentVideo: Video | undefined;
+  let archivedVideos: Video[] = [];
   let archivedVideoIds: string[] = [];
   let playing = false;
+
+  let viewingVideoList: Video[] = [];
+  let view: 'feed' | 'archived' = 'feed';
 
   const { subscriptions }: { subscriptions: Subscription[] } = data;
 
@@ -61,11 +65,21 @@
     }
   });
 
-  function archiveVideo(videoId: string) {
+  function archiveVideo(video: Video) {
     playing = false;
+    archivedVideos.push(video);
     currentVideo = undefined;
-    archivedVideoIds.push(videoId);
+    archivedVideoIds.push(video.id);
     $videosQuery.refetch();
+  }
+
+  $: {
+    if (view === 'feed' && $videosQuery.data) {
+      viewingVideoList = $videosQuery.data;
+    } else {
+      viewingVideoList = archivedVideos;
+    }
+    currentVideo = viewingVideoList[0];
   }
 </script>
 
@@ -80,11 +94,28 @@
       </div>
     {/each}
   </div>
-  <div class="flex w-1/5 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
+
+  <div class="relative flex w-1/5 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 pb-3">
+    <div class="sticky top-0 z-50 flex gap-2 bg-zinc-950 p-3">
+      <button
+        class="rounded-md px-4 py-1 transition duration-100 {view === 'feed'
+          ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
+          : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+        on:click={() => {
+          view = 'feed';
+        }}>Feed</button>
+      <button
+        class="rounded-md px-4 py-1 transition duration-100 {view === 'archived'
+          ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
+          : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+        on:click={() => {
+          view = 'archived';
+        }}>Archived</button>
+    </div>
     {#if $videosQuery.isLoading}
       <p>Loading...</p>
-    {:else if $videosQuery.data}
-      {#each $videosQuery.data as video}
+    {:else if viewingVideoList}
+      {#each viewingVideoList as video}
         <button
           class="group relative flex flex-col rounded-lg bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
           on:click={() => {
@@ -92,6 +123,7 @@
             currentVideo = video;
           }}>
           <img src={video.thumbnail} alt="video thumbnail" class="w-full rounded-t-md" />
+
           <div class="flex flex-col gap-1 p-3">
             <h3 class="line-clamp-2 font-bold leading-tight">{video.title}</h3>
             <div class="flex gap-1">
@@ -109,7 +141,7 @@
           <button
             class="absolute bottom-2 right-2 hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
             on:click|stopPropagation={() => {
-              archiveVideo(video.id);
+              archiveVideo(video);
             }}
             ><svg
               xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +184,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="h-full w-full fill-zinc-700 text-zinc-700">
+              class="h-full w-full fill-red-900 text-red-900">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -167,7 +199,7 @@
         <button
           class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
           on:click={() => {
-            if (currentVideo) archiveVideo(currentVideo.id);
+            if (currentVideo) archiveVideo(currentVideo);
           }}>Archive</button>
       </div>
       <div class="mt-2 flex gap-2">
