@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/stores';
   import { signIn, signOut } from '@auth/sveltekit/client';
 </script>
 
@@ -10,11 +11,20 @@
         A minimalist YouTube interface without the algorithms
       </h3>
     </div>
-    <button
-      class="mx-auto w-fit rounded-md bg-red-500 px-4 py-2 font-bold text-white transition duration-100 hover:bg-red-600"
-      on:click={() => {
-        signIn('google', { callbackUrl: '/app' });
-      }}>Sign In to Google</button>
+    <div class="mx-auto flex gap-2">
+      {#if $page.data.session}
+        <a
+          href="/app"
+          class="w-fit rounded-md bg-red-500 px-4 py-2 font-bold text-white transition duration-100 hover:bg-red-600"
+          >Open App</a>
+      {/if}
+
+      <button
+        class="w-fit rounded-md bg-red-500 px-4 py-2 font-bold text-white transition duration-100 hover:bg-red-600"
+        on:click={() => {
+          signIn('google', { callbackUrl: '/app' });
+        }}>Sign In to Google</button>
+    </div>
     <div>
       <p class="text-center text-zinc-500">
         This is a free and open-source project I started as a way to learn frontend web development
