@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import type { Subscription, Video } from '$lib/types.js';
   import { createQuery } from '@tanstack/svelte-query';
   import axios from 'axios';
   import moment from 'moment';
+  import { onMount } from 'svelte';
 
   export let data;
 
@@ -67,9 +69,9 @@
 
   function archiveVideo(video: Video) {
     playing = false;
-    archivedVideos.push(video);
+    archivedVideos = [video, ...archivedVideos];
     currentVideo = undefined;
-    archivedVideoIds.push(video.id);
+    archivedVideoIds = [video.id, ...archivedVideoIds];
     $videosQuery.refetch();
   }
 
@@ -80,6 +82,23 @@
       viewingVideoList = archivedVideos;
     }
     currentVideo = viewingVideoList[0];
+  }
+
+  onMount(() => {
+    const localArhivedVideos = localStorage.getItem('archivedVideos');
+    const localArhivedVideoIds = localStorage.getItem('archivedVideoIds');
+
+    if (localArhivedVideos && localArhivedVideoIds) {
+      archivedVideos = JSON.parse(localArhivedVideos) as Video[];
+      archivedVideoIds = JSON.parse(localArhivedVideoIds) as string[];
+    }
+  });
+
+  $: {
+    if (archivedVideos.length > 0 && archivedVideoIds.length > 0 && browser) {
+      localStorage.setItem('archivedVideos', JSON.stringify(archivedVideos));
+      localStorage.setItem('archivedVideoIds', JSON.stringify(archivedVideoIds));
+    }
   }
 </script>
 
