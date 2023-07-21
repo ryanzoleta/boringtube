@@ -23,16 +23,30 @@ export async function load({ locals }: RequestEvent) {
     throw redirect(303, '/');
   }
 
-  const response = await axios.get(
-    'https://youtube.googleapis.com/youtube/v3/subscriptions?mine=true&maxResults=500&part=snippet',
-    {
+  let subscriptions: Subscription[] = [];
+  let nextPage = '';
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const query = nextPage
+      ? `https://youtube.googleapis.com/youtube/v3/subscriptions?mine=true&maxResults=500&part=snippet&pageToken=${nextPage}`
+      : 'https://youtube.googleapis.com/youtube/v3/subscriptions?mine=true&maxResults=500&part=snippet';
+
+    const response = await axios.get(query, {
       headers: {
         Authorization: `Bearer ${account.access_token}`
       }
-    }
-  );
+    });
 
-  let subscriptions = response.data.items as Subscription[];
+    subscriptions = [...subscriptions, ...(response.data.items as Subscription[])];
+    nextPage = response.data.nextPageToken;
+
+    console.log(nextPage);
+
+    if (!nextPage) {
+      break;
+    }
+  }
 
   subscriptions = subscriptions.sort((a, b) => {
     return a.snippet.title.localeCompare(b.snippet.title);

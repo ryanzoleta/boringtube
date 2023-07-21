@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from '$app/environment';
   import type { Subscription, Video } from '$lib/types.js';
-  import { createQuery } from '@tanstack/svelte-query';
+  import { createInfiniteQuery, createQuery } from '@tanstack/svelte-query';
   import axios from 'axios';
   import moment from 'moment';
   import { onMount } from 'svelte';
@@ -18,9 +18,9 @@
 
   const { subscriptions }: { subscriptions: Subscription[] } = data;
 
-  const videosQuery = createQuery({
+  const videosQuery = createInfiniteQuery({
     queryKey: ['feed'],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 1 }) => {
       let videos = [];
 
       for (const channel of subscriptions) {
@@ -42,7 +42,10 @@
 
           const daysOld = moment().diff(published, 'days');
 
-          if (daysOld < 3) {
+          const minDay = (pageParam - 1) * 3;
+          const maxDay = pageParam * 3;
+
+          if (daysOld >= minDay && daysOld < maxDay) {
             videos.push({
               id: videoId,
               title: entry.getElementsByTagName('title')[0].innerHTML,
@@ -51,7 +54,7 @@
               channel: channel,
               published: entry.getElementsByTagName('published')[0].innerHTML
             });
-          } else {
+          } else if (daysOld >= maxDay) {
             break;
           }
         }
@@ -64,19 +67,19 @@
       if (!currentVideo) currentVideo = videos[0];
 
       return videos;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      return allPages.length + 1;
     }
   });
 
   function archiveVideo(video: Video) {
-    playing = false;
     archivedVideos = [video, ...archivedVideos];
-    currentVideo = undefined;
     archivedVideoIds = [video.id, ...archivedVideoIds];
     $videosQuery.refetch();
   }
 
   function unarchiveVideo(video: Video) {
-    playing = false;
     archivedVideos = archivedVideos.filter((v) => {
       return v.id !== video.id;
     });
@@ -88,7 +91,9 @@
 
   $: {
     if (view === 'feed' && $videosQuery.data) {
-      viewingVideoList = $videosQuery.data;
+      viewingVideoList = $videosQuery.data.pages.flatMap((page) => {
+        return page;
+      });
     } else {
       viewingVideoList = archivedVideos;
     }
@@ -204,6 +209,16 @@
           </button>
         </button>
       {/each}
+    {/if}
+
+    {#if view === 'feed'}
+      <div>
+        <button
+          class="rounded-full bg-zinc-800 px-4 py-2 text-white"
+          on:click={() => {
+            $videosQuery.fetchNextPage();
+          }}>More...</button>
+      </div>
     {/if}
   </div>
   <div class="relative flex-1 bg-zinc-950">
