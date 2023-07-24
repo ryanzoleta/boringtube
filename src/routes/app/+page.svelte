@@ -1,7 +1,8 @@
 <script lang="ts">
   import { browser } from '$app/environment';
   import type { Subscription, Video } from '$lib/types.js';
-  import { createInfiniteQuery, createQuery } from '@tanstack/svelte-query';
+  import { signOut } from '@auth/sveltekit/client';
+  import { createInfiniteQuery } from '@tanstack/svelte-query';
   import axios from 'axios';
   import moment from 'moment';
   import { onMount } from 'svelte';
@@ -120,116 +121,124 @@
   }
 </script>
 
-<div class="flex max-h-screen min-h-screen bg-zinc-950">
-  {#if !theaterMode}
-    <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
-      {#each subscriptions as subscription}
-        <div>
-          <img
-            src={subscription.snippet.thumbnails.default.url}
-            alt="channel avatar"
-            class="rounded-full" />
-        </div>
-      {/each}
+<div class="flex h-screen max-h-screen min-h-screen bg-zinc-950">
+  <div class="max-h-screen w-3/12 flex-col">
+    <div class="flex h-[6%] place-content-between bg-zinc-900 p-3">
+      <h1 class="my-auto text-3xl font-bold tracking-tight text-white">boringtube</h1>
+      <button class="text-zinc-500 hover:underline" on:click={signOut}>Logout</button>
     </div>
-
-    <div class="relative flex w-1/5 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 pb-3">
-      <div class="sticky top-0 z-50 flex gap-2 bg-zinc-950 p-3">
-        <button
-          class="rounded-md px-4 py-1 transition duration-100 {view === 'feed'
-            ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-            : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
-          on:click={() => {
-            view = 'feed';
-          }}>Feed</button>
-        <button
-          class="rounded-md px-4 py-1 transition duration-100 {view === 'archived'
-            ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-            : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
-          on:click={() => {
-            view = 'archived';
-          }}>Archived</button>
-      </div>
-      {#if $videosQuery.isLoading}
-        <div class="m-auto w-10 fill-zinc-500">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="animate-spin"
-            ><path
-              d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
-              class="spinner_P7sC" /></svg>
-        </div>
-      {:else if viewingVideoList}
-        {#each viewingVideoList as video}
-          <button
-            class="group relative flex flex-col rounded-lg bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
-            on:click={() => {
-              playing = false;
-              currentVideo = video;
-            }}>
-            <img src={video.thumbnail} alt="video thumbnail" class="w-full rounded-t-md" />
-
-            <div class="flex flex-col gap-1 p-3">
-              <h3 class="line-clamp-2 font-bold leading-tight">{video.title}</h3>
-              <div class="flex gap-1">
-                <div class="w-5">
-                  <img
-                    src={video.channel.snippet.thumbnails.default.url}
-                    alt="channel avatar"
-                    class="rounded-full" />
-                </div>
-                <p class="my-auto text-xs text-zinc-500">
-                  {video.channel.snippet.title} • {moment(video.published).fromNow()}
-                </p>
-              </div>
+    <div class="flex h-[94%]">
+      {#if !theaterMode}
+        <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
+          {#each subscriptions as subscription}
+            <div>
+              <img
+                src={subscription.snippet.thumbnails.default.url}
+                alt="channel avatar"
+                class="rounded-full" />
             </div>
-            <button
-              class="absolute bottom-2 right-2 hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
-              on:click|stopPropagation={() => {
-                if (view === 'feed') archiveVideo(video);
-                else unarchiveVideo(video);
-              }}>
-              {#if view === 'feed'}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="h-full w-full">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-              {:else}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="h-full w-full">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                </svg>
-              {/if}
-            </button>
-          </button>
-        {/each}
+          {/each}
+        </div>
 
-        {#if view === 'feed'}
-          <div>
+        <div class="relative flex flex-1 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 pb-3">
+          <div class="sticky top-0 z-50 flex gap-2 bg-zinc-950 p-3">
             <button
-              class="rounded-full bg-zinc-800 px-4 py-2 text-white"
+              class="rounded-md px-4 py-1 transition duration-100 {view === 'feed'
+                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
+                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
               on:click={() => {
-                $videosQuery.fetchNextPage();
-              }}>More...</button>
+                view = 'feed';
+              }}>Feed</button>
+            <button
+              class="rounded-md px-4 py-1 transition duration-100 {view === 'archived'
+                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
+                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+              on:click={() => {
+                view = 'archived';
+              }}>Archived</button>
           </div>
-        {/if}
+          {#if $videosQuery.isLoading}
+            <div class="m-auto w-10 fill-zinc-500">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="animate-spin"
+                ><path
+                  d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
+                  class="spinner_P7sC" /></svg>
+            </div>
+          {:else if viewingVideoList}
+            {#each viewingVideoList as video}
+              <button
+                class="group relative flex flex-col rounded-lg bg-zinc-900 text-left text-white transition duration-200 hover:bg-zinc-800"
+                on:click={() => {
+                  playing = false;
+                  currentVideo = video;
+                }}>
+                <img src={video.thumbnail} alt="video thumbnail" class="w-full rounded-t-md" />
+
+                <div class="flex flex-col gap-1 p-3">
+                  <h3 class="line-clamp-2 font-bold leading-tight">{video.title}</h3>
+                  <div class="flex gap-1">
+                    <div class="w-5">
+                      <img
+                        src={video.channel.snippet.thumbnails.default.url}
+                        alt="channel avatar"
+                        class="rounded-full" />
+                    </div>
+                    <p class="my-auto text-xs text-zinc-500">
+                      {video.channel.snippet.title} • {moment(video.published).fromNow()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  class="absolute bottom-2 right-2 hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
+                  on:click|stopPropagation={() => {
+                    if (view === 'feed') archiveVideo(video);
+                    else unarchiveVideo(video);
+                  }}>
+                  {#if view === 'feed'}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="h-full w-full">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  {:else}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="h-full w-full">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                  {/if}
+                </button>
+              </button>
+            {/each}
+
+            {#if view === 'feed'}
+              <div>
+                <button
+                  class="rounded-full bg-zinc-800 px-4 py-2 text-white"
+                  on:click={() => {
+                    $videosQuery.fetchNextPage();
+                  }}>More...</button>
+              </div>
+            {/if}
+          {/if}
+        </div>
       {/if}
     </div>
-  {/if}
+  </div>
 
   <div class="relative flex-1 overflow-scroll bg-zinc-950">
     {#if currentVideo}
