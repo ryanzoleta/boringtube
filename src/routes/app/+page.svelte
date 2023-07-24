@@ -2,7 +2,7 @@
   import { browser } from '$app/environment';
   import type { Subscription, Video } from '$lib/types.js';
   import { signOut } from '@auth/sveltekit/client';
-  import { createInfiniteQuery } from '@tanstack/svelte-query';
+  import { createInfiniteQuery, createQuery } from '@tanstack/svelte-query';
   import axios from 'axios';
   import moment from 'moment';
   import { onMount } from 'svelte';
@@ -20,6 +20,65 @@
   let theaterMode = false;
 
   const { subscriptions }: { subscriptions: Subscription[] } = data;
+
+  const allVideosQuery = createQuery({
+    queryKey: ['all_videos'],
+    queryFn: async () => {
+      const localAllVideosString = localStorage.getItem('all_videos');
+
+      const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
+      const localAllVideoIds = localAllVideos.map((v) => {
+        return v.id;
+      });
+
+      console.log('Found', localAllVideoIds.length, 'videos on local storage');
+
+      let videos = [];
+
+      for (const channel of subscriptions) {
+        const rssResponse = await axios.get(
+          `https://zoletacors.up.railway.app/https://www.youtube.com/feeds/videos.xml?channel_id=${channel.snippet.resourceId.channelId}`
+        );
+
+        const xmlStr = rssResponse.data;
+        const xml = new window.DOMParser().parseFromString(xmlStr, 'text/xml');
+        const entries = xml.querySelectorAll('entry');
+
+        for (const entry of entries) {
+          const videoId = entry.getElementsByTagName('yt:videoId')[0].innerHTML;
+          const published = entry.getElementsByTagName('published')[0].innerHTML;
+
+          if (localAllVideoIds.includes(videoId)) {
+            continue;
+          }
+
+          videos.push({
+            id: videoId,
+            title: entry.getElementsByTagName('title')[0].innerHTML,
+            url: `https://www.youtube.com/watch?v=${videoId}`,
+            thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
+            channel: channel,
+            published: published
+          });
+        }
+      }
+      videos = videos.sort((a, b) => {
+        return a.published.localeCompare(b.published) * -1;
+      });
+
+      if (!currentVideo) currentVideo = videos[0];
+
+      return videos;
+    },
+    onSuccess: (data) => {
+      const localAllVideosString = localStorage.getItem('all_videos');
+      const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
+      localStorage.setItem('all_videos', JSON.stringify([...data, ...localAllVideos]));
+      console.log('Successfully saved', data.length, 'videos');
+    }
+  });
+
+  $allVideosQuery;
 
   const videosQuery = createInfiniteQuery({
     queryKey: ['feed'],
