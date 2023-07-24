@@ -13,7 +13,7 @@
   let playing = false;
 
   let viewingVideoList: Video[] = [];
-  let view: 'new' | 'archived' | 'watch_later' = 'new';
+  let view: 'NEW' | 'ARCHIVED' | 'WATCH_LATER' = 'NEW';
 
   let theaterMode = false;
 
@@ -88,14 +88,20 @@
       const start = (pageParam - 1) * 20;
       const end = pageParam * 20;
 
-      return localAllVideos.slice(start, end).filter((v) => {
-        return v.status === (view === 'new' ? 'NEW' : 'ARCHIVED');
+      const outputVideos = localAllVideos.slice(start, end).filter((v) => {
+        return v.status === view;
       });
+
+      console.log('Displaying', outputVideos.length, 'videos');
+
+      return outputVideos;
     },
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length + 1;
     }
   });
+
+  $: if (view) $videosQuery.refetch();
 
   function archiveVideo(video: Video) {
     localAllVideos = localAllVideos.map((v) => {
@@ -128,6 +134,15 @@
       //@ts-ignore
       dialog.close();
     }
+  }
+
+  function watchLaterVideo(video: Video) {
+    localAllVideos = localAllVideos.map((v) => {
+      if (v.id === video.id) {
+        v.status = 'WATCH_LATER';
+      }
+      return v;
+    });
   }
 
   $: {
@@ -188,31 +203,28 @@
         <div class="relative flex flex-1 flex-col overflow-scroll bg-zinc-950 px-3 pb-3">
           <div class="sticky top-0 z-50 flex place-items-center gap-2 bg-zinc-950 py-3">
             <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'new'
+              class="rounded-md px-4 py-1 transition duration-100 {view === 'NEW'
                 ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
                 : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
               on:click={() => {
-                view = 'new';
-                $videosQuery.refetch();
+                view = 'NEW';
               }}>New</button>
             <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'watch_later'
+              class="rounded-md px-4 py-1 transition duration-100 {view === 'WATCH_LATER'
                 ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
                 : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
               on:click={() => {
-                view = 'watch_later';
-                $videosQuery.refetch();
+                view = 'WATCH_LATER';
               }}>Watch Later</button>
             <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'archived'
+              class="rounded-md px-4 py-1 transition duration-100 {view === 'ARCHIVED'
                 ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
                 : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
               on:click={() => {
-                view = 'archived';
-                $videosQuery.refetch();
+                view = 'ARCHIVED';
               }}>Archived</button>
 
-            {#if view === 'new'}
+            {#if view === 'NEW'}
               <button
                 class="group absolute right-0 block w-10 rounded-md bg-zinc-800 px-2 py-1 text-zinc-500 transition duration-200 hover:bg-zinc-700"
                 on:click={() => {
@@ -273,44 +285,67 @@
                       </p>
                     </div>
                   </div>
-                  <button
-                    class="absolute bottom-2 right-2 hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
-                    on:click|stopPropagation={() => {
-                      if (view === 'new') archiveVideo(video);
-                      else unarchiveVideo(video);
-                    }}>
-                    {#if view === 'new'}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="h-full w-full">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                      </svg>
-                    {:else}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="h-full w-full">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                      </svg>
+                  <div class="absolute bottom-1 right-2 flex">
+                    {#if view === 'NEW'}
+                      <button
+                        class=" hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
+                        on:click|stopPropagation={() => {
+                          watchLaterVideo(video);
+                        }}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                          class="h-6 w-6">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </button>
                     {/if}
-                  </button>
+
+                    <button
+                      class=" hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
+                      on:click|stopPropagation={() => {
+                        if (view === 'NEW' || view === 'WATCH_LATER') archiveVideo(video);
+                        else unarchiveVideo(video);
+                      }}>
+                      {#if view === 'NEW' || view === 'WATCH_LATER'}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                          class="h-full w-full">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      {:else}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                          class="h-full w-full">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                      {/if}
+                    </button>
+                  </div>
                 </button>
               {/each}
 
-              {#if view === 'new' && viewingVideoList.length > 0}
+              {#if view === 'NEW'}
                 <div bind:this={lastItem}>
                   <button class="rounded-full bg-zinc-800 px-4 py-2 text-white">More...</button>
                 </div>
@@ -363,15 +398,28 @@
 
       <div class="mr-10 mt-3 flex place-content-between gap-2 {theaterMode ? 'ml-7' : ''}">
         <h2 class="flex-1 text-2xl font-bold text-white">{currentVideo.title}</h2>
+        {#if view === 'NEW'}
+          <button
+            class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
+            on:click={() => {
+              if (currentVideo) {
+                watchLaterVideo(currentVideo);
+              }
+            }}>
+            {#if view === 'NEW'}
+              Watch Later
+            {/if}
+          </button>
+        {/if}
         <button
           class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
           on:click={() => {
             if (currentVideo) {
-              if (view === 'new') archiveVideo(currentVideo);
+              if (view === 'NEW') archiveVideo(currentVideo);
               else unarchiveVideo(currentVideo);
             }
           }}>
-          {#if view === 'new'}
+          {#if view === 'NEW'}
             Archive
           {:else}
             Unarchive
