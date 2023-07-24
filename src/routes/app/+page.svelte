@@ -14,6 +14,7 @@
 
   let viewingVideoList: Video[] = [];
   let view: 'NEW' | 'ARCHIVED' | 'WATCH_LATER' = 'NEW';
+  let currentChannel: Subscription | undefined;
 
   let theaterMode = false;
 
@@ -88,13 +89,19 @@
       const start = (pageParam - 1) * 20;
       const end = pageParam * 20;
 
-      const outputVideos = localAllVideos.slice(start, end).filter((v) => {
-        return v.status === view;
-      });
-
-      console.log('Displaying', outputVideos.length, 'videos');
-
-      return outputVideos;
+      if (currentChannel) {
+        return localAllVideos
+          .filter((v) => {
+            return v.status === view && v.channel.id === currentChannel?.id;
+          })
+          .slice(start, end);
+      } else {
+        return localAllVideos
+          .filter((v) => {
+            return v.status === view;
+          })
+          .slice(start, end);
+      }
     },
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length + 1;
@@ -150,7 +157,6 @@
       viewingVideoList = $videosQuery.data.pages.flatMap((page) => {
         return page;
       });
-      currentVideo = viewingVideoList[0];
     }
   }
 
@@ -179,6 +185,11 @@
   let lastItem: Element;
 
   $: if (observer && lastItem) observer.observe(lastItem);
+
+  $: {
+    currentChannel;
+    $videosQuery.refetch();
+  }
 </script>
 
 <div class="flex h-screen max-h-screen min-h-screen bg-zinc-950">
@@ -191,66 +202,102 @@
       {#if !theaterMode}
         <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
           {#each subscriptions as subscription}
-            <div>
+            <button
+              on:click={() => {
+                currentChannel = currentChannel?.id === subscription.id ? undefined : subscription;
+              }}>
               <img
                 src={subscription.snippet.thumbnails.default.url}
                 alt="channel avatar"
-                class="rounded-full" />
-            </div>
+                class={currentChannel?.id === subscription.id
+                  ? 'rounded-full border-2 border-green-500'
+                  : 'rounded-full'} />
+            </button>
           {/each}
         </div>
 
         <div class="relative flex flex-1 flex-col overflow-scroll bg-zinc-950 px-3 pb-3">
-          <div class="sticky top-0 z-50 flex place-items-center gap-2 bg-zinc-950 py-3">
-            <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'NEW'
-                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
-              on:click={() => {
-                view = 'NEW';
-              }}>New</button>
-            <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'WATCH_LATER'
-                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
-              on:click={() => {
-                view = 'WATCH_LATER';
-              }}>Watch Later</button>
-            <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'ARCHIVED'
-                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
-              on:click={() => {
-                view = 'ARCHIVED';
-              }}>Archived</button>
-
-            {#if view === 'NEW'}
+          <div class="sticky top-0 z-50 flex flex-col gap-2 bg-zinc-950 py-3">
+            <div class="flex gap-2">
               <button
-                class="group absolute right-0 block w-10 rounded-md bg-zinc-800 px-2 py-1 text-zinc-500 transition duration-200 hover:bg-zinc-700"
+                class="rounded-md px-4 py-1 transition duration-100 {view === 'NEW'
+                  ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
+                  : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
                 on:click={() => {
-                  const dialog = document.getElementById('archiveAllConfirmation');
-                  if (dialog) {
-                    //@ts-ignore
-                    dialog.showModal();
-                  }
-                }}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="h-full w-full">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-                <div
-                  class="absolute right-0 top-full mt-2 hidden w-24 rounded-md bg-red-900 px-2 py-2 text-red-300 shadow-md group-hover:block">
-                  Archive all
+                  view = 'NEW';
+                }}>New</button>
+              <button
+                class="rounded-md px-4 py-1 transition duration-100 {view === 'WATCH_LATER'
+                  ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
+                  : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+                on:click={() => {
+                  view = 'WATCH_LATER';
+                }}>Watch Later</button>
+              <button
+                class="rounded-md px-4 py-1 transition duration-100 {view === 'ARCHIVED'
+                  ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
+                  : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+                on:click={() => {
+                  view = 'ARCHIVED';
+                }}>Archived</button>
+
+              {#if view === 'NEW'}
+                <button
+                  class="group absolute right-0 block w-10 rounded-md bg-zinc-800 px-2 py-1 text-zinc-500 transition duration-200 hover:bg-zinc-700"
+                  on:click={() => {
+                    const dialog = document.getElementById('archiveAllConfirmation');
+                    if (dialog) {
+                      //@ts-ignore
+                      dialog.showModal();
+                    }
+                  }}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="h-full w-full">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                  <div
+                    class="absolute right-0 top-full mt-2 hidden w-24 rounded-md bg-red-900 px-2 py-2 text-red-300 shadow-md group-hover:block">
+                    Archive all
+                  </div>
+                </button>
+              {/if}
+            </div>
+
+            {#if currentChannel}
+              <div class="flex gap-1">
+                <div class="flex place-items-center">
+                  <button
+                    class=" w-7 rounded-full p-1 text-zinc-700 hover:bg-zinc-400"
+                    on:click={() => {
+                      currentChannel = undefined;
+                    }}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="h-full w-full">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-              </button>
+                <h1 class="text-zinc-600">
+                  Viewing <span class="text-lg font-bold text-zinc-500"
+                    >{currentChannel.snippet.title}</span>
+                </h1>
+              </div>
             {/if}
           </div>
           {#if $videosQuery.isLoading}
@@ -286,7 +333,7 @@
                     </div>
                   </div>
                   <div class="absolute bottom-1 right-2 flex">
-                    {#if view === 'NEW'}
+                    {#if view === 'NEW' || view === 'ARCHIVED'}
                       <button
                         class=" hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
                         on:click|stopPropagation={() => {
