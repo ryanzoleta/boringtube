@@ -154,22 +154,27 @@
     }
   }
 
-  onMount(() => {
-    const localArhivedVideos = localStorage.getItem('archivedVideos');
-    const localArhivedVideoIds = localStorage.getItem('archivedVideoIds');
+  let observer: IntersectionObserver;
 
-    if (localArhivedVideos && localArhivedVideoIds) {
-      archivedVideos = JSON.parse(localArhivedVideos) as Video[];
-      archivedVideoIds = JSON.parse(localArhivedVideoIds) as string[];
-    }
+  onMount(() => {
+    let options = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 1.0
+    };
+
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          $videosQuery.fetchNextPage();
+        }
+      });
+    }, options);
   });
 
-  $: {
-    if (archivedVideos.length > 0 && archivedVideoIds.length > 0 && browser) {
-      localStorage.setItem('archivedVideos', JSON.stringify(archivedVideos));
-      localStorage.setItem('archivedVideoIds', JSON.stringify(archivedVideoIds));
-    }
-  }
+  let lastItem: Element;
+
+  $: if (observer && lastItem) observer.observe(lastItem);
 </script>
 
 <div class="flex h-screen max-h-screen min-h-screen bg-zinc-950">
@@ -316,8 +321,8 @@
                 </button>
               {/each}
 
-              {#if view === 'new'}
-                <div>
+              {#if view === 'new' && viewingVideoList.length > 0}
+                <div bind:this={lastItem}>
                   <button
                     class="rounded-full bg-zinc-800 px-4 py-2 text-white"
                     on:click={() => {
