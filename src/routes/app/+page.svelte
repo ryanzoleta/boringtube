@@ -10,8 +10,6 @@
   export let data;
 
   let currentVideo: Video | undefined;
-  let archivedVideos: Video[] = [];
-  let archivedVideoIds: string[] = [];
   let playing = false;
 
   let viewingVideoList: Video[] = [];
@@ -19,19 +17,23 @@
 
   let theaterMode = false;
 
+  let localAllVideos: Video[];
+
+  $: {
+    if (browser && localAllVideos) {
+      localStorage.setItem('all_videos', JSON.stringify(localAllVideos));
+      $videosQuery.refetch();
+    }
+  }
+
   const { subscriptions }: { subscriptions: Subscription[] } = data;
 
   const allVideosQuery = createQuery({
     queryKey: ['all_videos'],
     queryFn: async () => {
-      const localAllVideosString = localStorage.getItem('all_videos');
-
-      const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
       const localAllVideoIds = localAllVideos.map((v) => {
         return v.id;
       });
-
-      console.log('Found', localAllVideoIds.length, 'videos on local storage');
 
       let videos: Video[] = [];
 
@@ -69,13 +71,11 @@
       return videos;
     },
     onSuccess: (data) => {
-      const localAllVideosString = localStorage.getItem('all_videos');
-      const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
       let newAllVideos = [...data, ...localAllVideos];
       newAllVideos = newAllVideos.sort((a, b) => {
         return a.published.localeCompare(b.published) * -1;
       });
-      localStorage.setItem('all_videos', JSON.stringify(newAllVideos));
+      localAllVideos = newAllVideos;
       console.log('Successfully saved', data.length, 'videos');
     }
   });
@@ -85,9 +85,6 @@
   const videosQuery = createInfiniteQuery({
     queryKey: ['feed'],
     queryFn: async ({ pageParam = 1 }) => {
-      const localAllVideosString = localStorage.getItem('all_videos');
-      const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
-
       const start = (pageParam - 1) * 20;
       const end = pageParam * 20;
 
@@ -101,42 +98,30 @@
   });
 
   function archiveVideo(video: Video) {
-    const localAllVideosString = localStorage.getItem('all_videos');
-    const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
-    const updatedAllVideos = localAllVideos.map((v) => {
+    localAllVideos = localAllVideos.map((v) => {
       if (v.id === video.id) {
         v.status = 'ARCHIVED';
       }
       return v;
     });
-    localStorage.setItem('all_videos', JSON.stringify(updatedAllVideos));
-    $videosQuery.refetch();
   }
 
   function unarchiveVideo(video: Video) {
-    const localAllVideosString = localStorage.getItem('all_videos');
-    const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
-    const updatedAllVideos = localAllVideos.map((v) => {
+    localAllVideos = localAllVideos.map((v) => {
       if (v.id === video.id) {
         v.status = 'NEW';
       }
       return v;
     });
-    localStorage.setItem('all_videos', JSON.stringify(updatedAllVideos));
-    $videosQuery.refetch();
   }
 
   function archiveAll() {
-    const localAllVideosString = localStorage.getItem('all_videos');
-    const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
-    const updatedAllVideos = localAllVideos.map((v) => {
+    localAllVideos = localAllVideos.map((v) => {
       if (v.status === 'NEW') {
         v.status = 'ARCHIVED';
       }
       return v;
     });
-    localStorage.setItem('all_videos', JSON.stringify(updatedAllVideos));
-    $videosQuery.refetch();
 
     const dialog = document.getElementById('archiveAllConfirmation');
     if (dialog) {
@@ -157,6 +142,10 @@
   let observer: IntersectionObserver;
 
   onMount(() => {
+    const localAllVideosString = localStorage.getItem('all_videos');
+    localAllVideos = localAllVideosString ? JSON.parse(localAllVideosString) : [];
+    console.log('Found', localAllVideos.length, 'videos on local storage');
+
     let options = {
       root: null,
       rootMargin: '0px',
@@ -323,11 +312,7 @@
 
               {#if view === 'new' && viewingVideoList.length > 0}
                 <div bind:this={lastItem}>
-                  <button
-                    class="rounded-full bg-zinc-800 px-4 py-2 text-white"
-                    on:click={() => {
-                      $videosQuery.fetchNextPage();
-                    }}>More...</button>
+                  <button class="rounded-full bg-zinc-800 px-4 py-2 text-white">More...</button>
                 </div>
               {/if}
             </div>
