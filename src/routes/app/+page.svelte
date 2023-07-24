@@ -218,7 +218,7 @@
                 $videosQuery.refetch();
               }}>Archived</button>
 
-            {#if view === 'new' || view === 'archived'}
+            {#if view === 'new'}
               <button
                 class="group absolute right-0 block w-10 rounded-md bg-zinc-800 px-2 py-1 text-zinc-500 transition duration-200 hover:bg-zinc-700"
                 on:click={() => {
