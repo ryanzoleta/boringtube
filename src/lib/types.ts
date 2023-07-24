@@ -32,4 +32,5 @@ export type Video = {
   thumbnail: string;
   channel: Subscription;
   published: string;
+  status: 'NEW' | 'ARCHIVED' | 'WATCH_LATER';
 };

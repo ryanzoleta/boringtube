@@ -15,7 +15,7 @@
   let playing = false;
 
   let viewingVideoList: Video[] = [];
-  let view: 'feed' | 'archived' = 'feed';
+  let view: 'new' | 'archived' = 'new';
 
   let theaterMode = false;
 
@@ -33,7 +33,7 @@
 
       console.log('Found', localAllVideoIds.length, 'videos on local storage');
 
-      let videos = [];
+      let videos: Video[] = [];
 
       for (const channel of subscriptions) {
         const rssResponse = await axios.get(
@@ -58,13 +58,11 @@
             url: `https://www.youtube.com/watch?v=${videoId}`,
             thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
             channel: channel,
-            published: published
+            published: published,
+            status: 'NEW'
           });
         }
       }
-      videos = videos.sort((a, b) => {
-        return a.published.localeCompare(b.published) * -1;
-      });
 
       if (!currentVideo) currentVideo = videos[0];
 
@@ -73,7 +71,11 @@
     onSuccess: (data) => {
       const localAllVideosString = localStorage.getItem('all_videos');
       const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
-      localStorage.setItem('all_videos', JSON.stringify([...data, ...localAllVideos]));
+      let newAllVideos = [...data, ...localAllVideos];
+      newAllVideos = newAllVideos.sort((a, b) => {
+        return a.published.localeCompare(b.published) * -1;
+      });
+      localStorage.setItem('all_videos', JSON.stringify(newAllVideos));
       console.log('Successfully saved', data.length, 'videos');
     }
   });
@@ -83,52 +85,15 @@
   const videosQuery = createInfiniteQuery({
     queryKey: ['feed'],
     queryFn: async ({ pageParam = 1 }) => {
-      let videos = [];
+      const localAllVideosString = localStorage.getItem('all_videos');
+      const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
 
-      for (const channel of subscriptions) {
-        const rssResponse = await axios.get(
-          `https://zoletacors.up.railway.app/https://www.youtube.com/feeds/videos.xml?channel_id=${channel.snippet.resourceId.channelId}`
-        );
+      const start = (pageParam - 1) * 20;
+      const end = pageParam * 20;
 
-        const xmlStr = rssResponse.data;
-        const xml = new window.DOMParser().parseFromString(xmlStr, 'text/xml');
-        const entries = xml.querySelectorAll('entry');
-
-        for (const entry of entries) {
-          const videoId = entry.getElementsByTagName('yt:videoId')[0].innerHTML;
-          const published = moment(entry.getElementsByTagName('published')[0].innerHTML);
-
-          if (archivedVideoIds.includes(videoId)) {
-            continue;
-          }
-
-          const daysOld = moment().diff(published, 'days');
-
-          const minDay = (pageParam - 1) * 3;
-          const maxDay = pageParam * 3;
-
-          if (daysOld >= minDay && daysOld < maxDay) {
-            videos.push({
-              id: videoId,
-              title: entry.getElementsByTagName('title')[0].innerHTML,
-              url: `https://www.youtube.com/watch?v=${videoId}`,
-              thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
-              channel: channel,
-              published: entry.getElementsByTagName('published')[0].innerHTML
-            });
-          } else if (daysOld >= maxDay) {
-            break;
-          }
-        }
-      }
-
-      videos = videos.sort((a, b) => {
-        return a.published.localeCompare(b.published) * -1;
+      return localAllVideos.slice(start, end).filter((v) => {
+        return v.status === (view === 'new' ? 'NEW' : 'ARCHIVED');
       });
-
-      if (!currentVideo) currentVideo = videos[0];
-
-      return videos;
     },
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length + 1;
@@ -136,30 +101,38 @@
   });
 
   function archiveVideo(video: Video) {
-    archivedVideos = [video, ...archivedVideos];
-    archivedVideoIds = [video.id, ...archivedVideoIds];
+    const localAllVideosString = localStorage.getItem('all_videos');
+    const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
+    const updatedAllVideos = localAllVideos.map((v) => {
+      if (v.id === video.id) {
+        v.status = 'ARCHIVED';
+      }
+      return v;
+    });
+    localStorage.setItem('all_videos', JSON.stringify(updatedAllVideos));
     $videosQuery.refetch();
   }
 
   function unarchiveVideo(video: Video) {
-    archivedVideos = archivedVideos.filter((v) => {
-      return v.id !== video.id;
+    const localAllVideosString = localStorage.getItem('all_videos');
+    const localAllVideos: Video[] = localAllVideosString ? JSON.parse(localAllVideosString) : [];
+    const updatedAllVideos = localAllVideos.map((v) => {
+      if (v.id === video.id) {
+        v.status = 'NEW';
+      }
+      return v;
     });
-    archivedVideoIds = archivedVideoIds.filter((v) => {
-      return v !== video.id;
-    });
+    localStorage.setItem('all_videos', JSON.stringify(updatedAllVideos));
     $videosQuery.refetch();
   }
 
   $: {
-    if (view === 'feed' && $videosQuery.data) {
+    if ($videosQuery.data) {
       viewingVideoList = $videosQuery.data.pages.flatMap((page) => {
         return page;
       });
-    } else {
-      viewingVideoList = archivedVideos;
+      currentVideo = viewingVideoList[0];
     }
-    currentVideo = viewingVideoList[0];
   }
 
   onMount(() => {
@@ -202,18 +175,20 @@
         <div class="relative flex flex-1 flex-col overflow-scroll bg-zinc-950 px-3 pb-3">
           <div class="sticky top-0 z-50 flex gap-2 bg-zinc-950 p-3">
             <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'feed'
+              class="rounded-md px-4 py-1 transition duration-100 {view === 'new'
                 ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
                 : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
               on:click={() => {
-                view = 'feed';
-              }}>Feed</button>
+                view = 'new';
+                $videosQuery.refetch();
+              }}>New</button>
             <button
               class="rounded-md px-4 py-1 transition duration-100 {view === 'archived'
                 ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
                 : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
               on:click={() => {
                 view = 'archived';
+                $videosQuery.refetch();
               }}>Archived</button>
           </div>
           {#if $videosQuery.isLoading}
@@ -251,10 +226,10 @@
                   <button
                     class="absolute bottom-2 right-2 hidden w-8 rounded-md p-1 text-zinc-700 hover:bg-zinc-900 group-hover:block"
                     on:click|stopPropagation={() => {
-                      if (view === 'feed') archiveVideo(video);
+                      if (view === 'new') archiveVideo(video);
                       else unarchiveVideo(video);
                     }}>
-                    {#if view === 'feed'}
+                    {#if view === 'new'}
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -285,7 +260,7 @@
                 </button>
               {/each}
 
-              {#if view === 'feed'}
+              {#if view === 'new'}
                 <div>
                   <button
                     class="rounded-full bg-zinc-800 px-4 py-2 text-white"
@@ -346,11 +321,11 @@
           class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
           on:click={() => {
             if (currentVideo) {
-              if (view === 'feed') archiveVideo(currentVideo);
+              if (view === 'new') archiveVideo(currentVideo);
               else unarchiveVideo(currentVideo);
             }
           }}>
-          {#if view === 'feed'}
+          {#if view === 'new'}
             Archive
           {:else}
             Unarchive
