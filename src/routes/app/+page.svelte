@@ -180,6 +180,12 @@
         }
       });
     }, options);
+
+    document.addEventListener('keyup', (event) => {
+      if (event.key === 'Escape') {
+        if (theaterMode) theaterMode = false;
+      }
+    });
   });
 
   let lastItem: Element;
@@ -193,13 +199,13 @@
 </script>
 
 <div class="flex h-screen max-h-screen min-h-screen bg-zinc-950">
-  <div class="max-h-screen w-3/12 flex-col">
-    <div class="flex h-[6%] place-content-between bg-zinc-900 p-3">
-      <h1 class="my-auto text-3xl font-bold tracking-tight text-white">boringtube</h1>
-      <button class="text-zinc-500 hover:underline" on:click={signOut}>Logout</button>
-    </div>
-    <div class="flex h-[94%]">
-      {#if !theaterMode}
+  {#if !theaterMode}
+    <div class="max-h-screen w-3/12 flex-col">
+      <div class="flex h-[6%] place-content-between bg-zinc-900 p-3">
+        <h1 class="my-auto text-3xl font-bold tracking-tight text-white">boringtube</h1>
+        <button class="text-zinc-500 hover:underline" on:click={signOut}>Logout</button>
+      </div>
+      <div class="flex h-[94%]">
         <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
           {#each subscriptions as subscription}
             <button
@@ -400,9 +406,9 @@
             </div>
           {/if}
         </div>
-      {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 
   <div class="relative z-10 flex-1 overflow-scroll bg-zinc-950">
     {#if currentVideo}
