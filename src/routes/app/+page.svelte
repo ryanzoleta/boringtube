@@ -405,6 +405,11 @@
                     </button>
                   </div>
                 </button>
+              {:else}
+                <div class="m-auto text-center flex-col flex place-content-center">
+                  <p class="mt-10 text-2xl">😭</p>
+                  <p class="text-zinc-500">There's nothing here</p>
+                </div>
               {/each}
 
               {#if view === 'NEW'}
@@ -511,6 +516,10 @@
           <p class="text-lg font-bold text-zinc-400">{currentVideo.channel.snippet.title}</p>
           <p class="text-zinc-500">{moment(currentVideo.published).fromNow()}</p>
         </div>
+      </div>
+    {:else}
+      <div class="flex h-full place-items-center">
+        <p class="w-full text-center text-zinc-500">Select a video to start watching</p>
       </div>
     {/if}
   </div>
