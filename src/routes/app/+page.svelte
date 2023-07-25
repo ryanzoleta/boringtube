@@ -218,7 +218,10 @@
                 if (feedList) {
                   feedList.scrollTop = 0;
                 }
-              }}>
+              }}
+              class="{currentChannel?.id === subscription.id
+                ? 'opacity-100'
+                : 'opacity-70'} transition duration-200 hover:opacity-100">
               <img
                 src={subscription.snippet.thumbnails.default.url}
                 alt="channel avatar"
