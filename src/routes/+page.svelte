@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { signIn, signOut } from '@auth/sveltekit/client';
+  import { signIn } from '@auth/sveltekit/client';
 </script>
 
 <main class="flex min-h-screen flex-col place-items-center bg-black">
