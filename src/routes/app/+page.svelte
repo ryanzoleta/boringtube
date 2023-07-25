@@ -97,6 +97,10 @@
       const start = (pageParam - 1) * 20;
       const end = pageParam * 20;
 
+      if (!$channelsQuery.data) {
+        return [];
+      }
+
       if (currentChannel) {
         return localAllVideos
           .filter((v) => {

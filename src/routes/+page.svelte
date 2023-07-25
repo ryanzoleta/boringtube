@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { signIn } from '@auth/sveltekit/client';
-  import { fade, slide, fly, blur } from 'svelte/transition';
+  import { fade } from 'svelte/transition';
 
   let show = false;
 

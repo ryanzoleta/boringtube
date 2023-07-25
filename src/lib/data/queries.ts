@@ -15,15 +15,11 @@ export async function getUser(session: Session) {
   });
 }
 
-export async function getAccount(user: User) {
-  if (!user?.id) {
-    return null;
-  }
-
+export async function getAccount(userId: string) {
   const account = (
     await prisma.account.findMany({
       where: {
-        userId: user?.id
+        userId: userId
       }
     })
   )[0];

@@ -16,7 +16,7 @@ export async function GET({ locals }: RequestEvent) {
     throw redirect(303, '/');
   }
 
-  const account = await getAccount(user);
+  const account = await getAccount(user.id);
 
   if (!account?.access_token) {
     throw redirect(303, '/');
@@ -39,8 +39,6 @@ export async function GET({ locals }: RequestEvent) {
 
     subscriptions = [...subscriptions, ...(response.data.items as Subscription[])];
     nextPage = response.data.nextPageToken;
-
-    console.log(nextPage);
 
     if (!nextPage) {
       break;
