@@ -208,6 +208,12 @@
     currentChannel;
     $videosQuery.refetch();
   }
+
+  $: {
+    if ($channelsQuery.data?.length && $channelsQuery.data?.length > 0) {
+      $videosQuery.refetch();
+    }
+  }
 </script>
 
 <!-- <div
@@ -430,7 +436,7 @@
                 </div>
               {/each}
 
-              {#if view === 'NEW'}
+              {#if view === 'NEW' && viewingVideoList.length > 0}
                 <div bind:this={lastItem}>
                   <button class="rounded-full bg-zinc-800 px-4 py-2 text-white">More...</button>
                 </div>
