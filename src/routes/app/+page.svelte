@@ -211,6 +211,7 @@
             <button
               on:click={() => {
                 currentChannel = currentChannel?.id === subscription.id ? undefined : subscription;
+                document.getElementById('feedList').scrollTop = 0;
               }}>
               <img
                 src={subscription.snippet.thumbnails.default.url}
@@ -222,7 +223,9 @@
           {/each}
         </div>
 
-        <div class="relative flex flex-1 flex-col overflow-scroll bg-zinc-950 px-3 pb-3">
+        <div
+          class="relative flex flex-1 flex-col overflow-scroll bg-zinc-950 px-3 pb-3"
+          id="feedList">
           <div class="sticky top-0 z-50 flex flex-col gap-2 bg-zinc-950 py-3">
             <div class="flex gap-2">
               <button
