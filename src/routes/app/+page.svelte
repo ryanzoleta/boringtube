@@ -198,9 +198,12 @@
   }
 </script>
 
+<!-- <div
+  class="fixed left-0 top-0 z-50 h-48 w-48 sm:bg-green-500 md:bg-red-500 lg:bg-yellow-500 xl:bg-blue-500 2xl:bg-purple-500" /> -->
+
 <div class="flex h-screen max-h-screen min-h-screen bg-zinc-950">
   {#if !theaterMode}
-    <div class="max-h-screen w-3/12 flex-col">
+    <div class="max-h-screen flex-col md:w-4/12 2xl:w-3/12">
       <div class="flex h-[6%] place-content-between bg-zinc-900 p-3">
         <h1 class="my-auto text-3xl font-bold tracking-tight text-white">boringtube</h1>
         <button class="text-zinc-500 hover:underline" on:click={signOut}>Logout</button>
@@ -239,7 +242,7 @@
                   view = 'NEW';
                 }}>New</button>
               <button
-                class="rounded-md px-4 py-1 transition duration-100 {view === 'WATCH_LATER'
+                class="truncate rounded-md px-4 py-1 transition duration-100 {view === 'WATCH_LATER'
                   ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
                   : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
                 on:click={() => {
