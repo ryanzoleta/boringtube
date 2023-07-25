@@ -7,8 +7,6 @@
   import moment from 'moment';
   import { onMount } from 'svelte';
 
-  export let data;
-
   let currentVideo: Video | undefined;
   let playing = false;
 
@@ -27,7 +25,13 @@
     }
   }
 
-  const { subscriptions }: { subscriptions: Subscription[] } = data;
+  const channelsQuery = createQuery({
+    queryKey: ['channels'],
+    queryFn: async () => {
+      const response = await axios.get('/api/subscriptions');
+      return response.data.subscriptions as Subscription[];
+    }
+  });
 
   const allVideosQuery = createQuery({
     queryKey: ['all_videos'],
@@ -38,7 +42,11 @@
 
       let videos: Video[] = [];
 
-      for (const channel of subscriptions) {
+      if (!$channelsQuery.data) {
+        return [];
+      }
+
+      for (const channel of $channelsQuery.data) {
         const rssResponse = await axios.get(
           `https://zoletacors.up.railway.app/https://www.youtube.com/feeds/videos.xml?channel_id=${channel.snippet.resourceId.channelId}`
         );
@@ -205,31 +213,34 @@
   {#if !theaterMode}
     <div class="max-h-screen flex-col md:w-4/12 2xl:w-3/12">
       <div class="flex h-[6%] place-content-between bg-zinc-900 p-3">
-        <h1 class="my-auto text-3xl font-bold tracking-tight text-white">boringtube</h1>
+        <a href="/" class="my-auto text-3xl font-bold tracking-tight text-white">boringtube</a>
         <button class="text-zinc-500 hover:underline" on:click={signOut}>Logout</button>
       </div>
       <div class="flex h-[94%]">
         <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
-          {#each subscriptions as subscription}
-            <button
-              on:click={() => {
-                currentChannel = currentChannel?.id === subscription.id ? undefined : subscription;
-                const feedList = document.getElementById('feedList');
-                if (feedList) {
-                  feedList.scrollTop = 0;
-                }
-              }}
-              class="{currentChannel?.id === subscription.id
-                ? 'opacity-100'
-                : 'opacity-70'} transition duration-200 hover:opacity-100">
-              <img
-                src={subscription.snippet.thumbnails.default.url}
-                alt="channel avatar"
-                class={currentChannel?.id === subscription.id
-                  ? 'rounded-full border-2 border-green-500'
-                  : 'rounded-full'} />
-            </button>
-          {/each}
+          {#if $channelsQuery.data}
+            {#each $channelsQuery.data as subscription}
+              <button
+                on:click={() => {
+                  currentChannel =
+                    currentChannel?.id === subscription.id ? undefined : subscription;
+                  const feedList = document.getElementById('feedList');
+                  if (feedList) {
+                    feedList.scrollTop = 0;
+                  }
+                }}
+                class="{currentChannel?.id === subscription.id
+                  ? 'opacity-100'
+                  : 'opacity-70'} transition duration-200 hover:opacity-100">
+                <img
+                  src={subscription.snippet.thumbnails.default.url}
+                  alt="channel avatar"
+                  class={currentChannel?.id === subscription.id
+                    ? 'rounded-full border-2 border-green-500'
+                    : 'rounded-full'} />
+              </button>
+            {/each}
+          {/if}
         </div>
 
         <div

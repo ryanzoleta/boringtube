@@ -1,10 +1,9 @@
-import { prisma } from '$lib/data/prisma';
-import { getAccount, getUser } from '$lib/data/queries';
+import { getUser, getAccount } from '$lib/data/queries';
 import type { Subscription } from '$lib/types';
-import { redirect, type RequestEvent } from '@sveltejs/kit';
+import { json, redirect, type RequestEvent } from '@sveltejs/kit';
 import axios from 'axios';
 
-export async function load({ locals }: RequestEvent) {
+export async function GET({ locals }: RequestEvent) {
   const session = await locals.getSession();
 
   if (!session || !session?.user?.email) {
@@ -52,9 +51,5 @@ export async function load({ locals }: RequestEvent) {
     return a.snippet.title.localeCompare(b.snippet.title);
   });
 
-  return {
-    user,
-    account,
-    subscriptions
-  };
+  return json({ subscriptions });
 }
