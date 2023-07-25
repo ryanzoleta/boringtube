@@ -211,7 +211,10 @@
             <button
               on:click={() => {
                 currentChannel = currentChannel?.id === subscription.id ? undefined : subscription;
-                document.getElementById('feedList').scrollTop = 0;
+                const feedList = document.getElementById('feedList');
+                if (feedList) {
+                  feedList.scrollTop = 0;
+                }
               }}>
               <img
                 src={subscription.snippet.thumbnails.default.url}
