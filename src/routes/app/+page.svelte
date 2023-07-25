@@ -430,32 +430,31 @@
           class={theaterMode ? 'z-0 h-full w-full' : 'z-0 h-4/5 w-full'}
           allowFullScreen />
       {:else}
-        <img
-          src={currentVideo.thumbnail}
-          alt="video thumbnail"
-          class={theaterMode ? 'h-full w-full' : 'h-4/5 w-full'} />
-        <button
-          class="absolute top-0 bg-black opacity-70 {theaterMode
-            ? 'h-full w-full'
-            : 'h-4/5 w-full'}"
-          on:click={() => {
-            playing = true;
-          }}>
-          <div class=" m-auto h-full w-2/12">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="h-full w-full fill-red-900 text-red-900">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-            </svg>
-          </div>
-        </button>
+        <div class={theaterMode ? 'h-full w-full' : 'flex h-4/5 w-full'}>
+          <img src={currentVideo.thumbnail} alt="video thumbnail" class="my-auto" />
+          <button
+            class="absolute top-0 bg-black opacity-70 {theaterMode
+              ? 'h-full w-full'
+              : 'h-4/5 w-full'}"
+            on:click={() => {
+              playing = true;
+            }}>
+            <div class=" m-auto h-full w-2/12">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="h-full w-full fill-red-900 text-red-900">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+              </svg>
+            </div>
+          </button>
+        </div>
       {/if}
 
       <div class="mr-10 mt-3 flex place-content-between gap-2 {theaterMode ? 'ml-7' : ''}">
