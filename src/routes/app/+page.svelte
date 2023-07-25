@@ -462,7 +462,7 @@
         <h2 class="flex-1 text-2xl font-bold text-white">{currentVideo.title}</h2>
         {#if view === 'NEW'}
           <button
-            class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
+            class="h-fit rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
             on:click={() => {
               if (currentVideo) {
                 watchLaterVideo(currentVideo);
@@ -474,7 +474,7 @@
           </button>
         {/if}
         <button
-          class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
+          class="h-fit rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
           on:click={() => {
             if (currentVideo) {
               if (view === 'NEW') archiveVideo(currentVideo);
@@ -489,13 +489,13 @@
         </button>
         {#if theaterMode}
           <button
-            class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
+            class="h-fit rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
             on:click={() => {
               theaterMode = false;
             }}>Exit Theather Mode</button>
         {:else}
           <button
-            class="rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
+            class="h-fit rounded-md bg-zinc-800 px-4 py-2 font-bold text-zinc-400 transition duration-200 hover:bg-zinc-900"
             on:click={() => {
               theaterMode = true;
             }}>Enable Theather Mode</button>
