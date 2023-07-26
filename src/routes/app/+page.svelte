@@ -105,19 +105,15 @@
         return [];
       }
 
-      if (currentChannel) {
-        return localAllVideos
-          .filter((v) => {
+      return localAllVideos
+        .filter((v) => {
+          if (currentChannel) {
             return v.status === view && v.channel.id === currentChannel?.id;
-          })
-          .slice(start, end);
-      } else {
-        return localAllVideos
-          .filter((v) => {
-            return v.status === view;
-          })
-          .slice(start, end);
-      }
+          }
+
+          return v.status === view;
+        })
+        .slice(start, end);
     },
     getNextPageParam: (lastPage, allPages) => {
       return allPages.length + 1;
