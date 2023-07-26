@@ -422,7 +422,7 @@
             allowFullScreen />
         {:else}
           <div class={theaterMode ? 'h-full w-full' : 'flex h-4/5 w-full'}>
-            <img src={currentVideo.thumbnail} alt="video thumbnail" class="my-auto" />
+            <img src={currentVideo.thumbnail} alt="video thumbnail" class="m-auto" />
             <button
               class="absolute top-0 bg-black opacity-70 {theaterMode
                 ? 'h-full w-full'
