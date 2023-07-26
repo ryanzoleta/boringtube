@@ -13,6 +13,7 @@
   import axios from 'axios';
   import moment from 'moment';
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
 
   let currentVideo: Video | undefined;
   let playing = false;
@@ -534,7 +535,7 @@
   </div>
 </div>
 
-<dialog id="archiveAllConfirmation" class="rounded-lg bg-zinc-700 p-5 text-white">
+<dialog id="archiveAllConfirmation" class="rounded-lg bg-zinc-900 p-5 text-white">
   <form>
     <h1 class="text-2xl font-bold">Archive All</h1>
     <p class="text-zinc-300">Are you sure you want to archive all new videos in your feed?</p>

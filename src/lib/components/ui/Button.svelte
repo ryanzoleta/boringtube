@@ -8,10 +8,10 @@
 
   switch (variant) {
     case 'primary':
-      colors = 'bg-zinc-800 text-zinc-400 hover:bg-zinc-900';
+      colors = 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700';
       break;
     case 'secondary':
-      colors = 'bg-zinc-800 text-zinc-400 hover:bg-zinc-900';
+      colors = 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700';
       break;
     case 'danger':
       colors = 'bg-red-900 text-red-300 hover:bg-red-800';
