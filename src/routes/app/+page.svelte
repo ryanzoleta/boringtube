@@ -13,7 +13,6 @@
   import axios from 'axios';
   import moment from 'moment';
   import { onMount } from 'svelte';
-  import { fade } from 'svelte/transition';
 
   let currentVideo: Video | undefined;
   let playing = false;
