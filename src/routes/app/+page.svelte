@@ -180,6 +180,7 @@
       }
       return v;
     });
+    refreshCurrentVideo();
   }
 
   function unarchiveVideo(video: Video) {
@@ -189,6 +190,7 @@
       }
       return v;
     });
+    refreshCurrentVideo();
   }
 
   function archiveAll() {
@@ -204,6 +206,7 @@
       //@ts-ignore
       dialog.close();
     }
+    refreshCurrentVideo();
   }
 
   function watchLaterVideo(video: Video) {
@@ -212,6 +215,23 @@
         v.status = 'WATCH_LATER';
       }
       return v;
+    });
+    refreshCurrentVideo();
+  }
+
+  function unwatchLaterVideo(video: Video) {
+    localAllVideos = localAllVideos.map((v) => {
+      if (v.id === video.id) {
+        v.status = 'NEW';
+      }
+      return v;
+    });
+    refreshCurrentVideo();
+  }
+
+  function refreshCurrentVideo() {
+    currentVideo = localAllVideos.find((v) => {
+      return v.id === currentVideo?.id;
     });
   }
 </script>
@@ -419,7 +439,7 @@
 
         <div class="mr-10 mt-3 flex place-content-between gap-2 {theaterMode ? 'ml-7' : ''}">
           <h2 class="flex-1 text-2xl font-bold text-white">{currentVideo.title}</h2>
-          {#if view === 'NEW'}
+          {#if currentVideo.status !== 'WATCH_LATER'}
             <Button
               variant="secondary"
               on:click={() => {
@@ -427,25 +447,42 @@
                   watchLaterVideo(currentVideo);
                 }
               }}>
-              {#if view === 'NEW'}
-                Watch Later
-              {/if}
+              Watch Later
+            </Button>
+          {:else}
+            <Button
+              variant="secondary"
+              on:click={() => {
+                if (currentVideo) {
+                  unwatchLaterVideo(currentVideo);
+                }
+              }}>
+              Unsave
             </Button>
           {/if}
-          <Button
-            variant="secondary"
-            on:click={() => {
-              if (currentVideo) {
-                if (view === 'NEW') archiveVideo(currentVideo);
-                else unarchiveVideo(currentVideo);
-              }
-            }}>
-            {#if view === 'NEW'}
+
+          {#if currentVideo.status !== 'ARCHIVED'}
+            <Button
+              variant="secondary"
+              on:click={() => {
+                if (currentVideo) {
+                  archiveVideo(currentVideo);
+                }
+              }}>
               Archive
-            {:else}
+            </Button>
+          {:else}
+            <Button
+              variant="secondary"
+              on:click={() => {
+                if (currentVideo) {
+                  unarchiveVideo(currentVideo);
+                }
+              }}>
               Unarchive
-            {/if}
-          </Button>
+            </Button>
+          {/if}
+
           {#if theaterMode}
             <Button
               variant="secondary"
