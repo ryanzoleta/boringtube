@@ -234,6 +234,18 @@
       return v.id === currentVideo?.id;
     });
   }
+
+  function getNextVideoInList(id: string, list: Video[]) {
+    let getNext = false;
+    for (const v of list) {
+      if (getNext) {
+        return v;
+      }
+      if (id == v.id) {
+        getNext = true;
+      }
+    }
+  }
 </script>
 
 <!-- <div
@@ -445,6 +457,7 @@
               on:click={() => {
                 if (currentVideo) {
                   watchLaterVideo(currentVideo);
+                  currentVideo = getNextVideoInList(currentVideo.id, viewingVideoList);
                 }
               }}>
               Watch Later
@@ -455,6 +468,7 @@
               on:click={() => {
                 if (currentVideo) {
                   unwatchLaterVideo(currentVideo);
+                  currentVideo = getNextVideoInList(currentVideo.id, viewingVideoList);
                 }
               }}>
               Unsave
@@ -467,6 +481,7 @@
               on:click={() => {
                 if (currentVideo) {
                   archiveVideo(currentVideo);
+                  currentVideo = getNextVideoInList(currentVideo.id, viewingVideoList);
                 }
               }}>
               Archive
@@ -477,6 +492,7 @@
               on:click={() => {
                 if (currentVideo) {
                   unarchiveVideo(currentVideo);
+                  currentVideo = getNextVideoInList(currentVideo.id, viewingVideoList);
                 }
               }}>
               Unarchive
