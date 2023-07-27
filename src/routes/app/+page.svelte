@@ -319,6 +319,7 @@
                   }
                 }}>
                 <IconTrash />
+
                 <div
                   class="absolute right-0 top-full mt-2 hidden w-24 rounded-md bg-red-900 px-2 py-2 text-red-300 shadow-md group-hover:block">
                   Archive all
@@ -338,6 +339,7 @@
                   <IconX />
                 </button>
               </div>
+
               <h1 class="text-zinc-600">
                 Viewing <span class="text-lg font-bold text-zinc-500"
                   >{currentChannel.snippet.title}</span>
@@ -374,6 +376,7 @@
                     </p>
                   </div>
                 </div>
+
                 <div class="absolute bottom-1 right-2 flex">
                   {#if view === 'NEW' || view === 'ARCHIVED'}
                     <button
