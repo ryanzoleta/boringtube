@@ -512,13 +512,20 @@
         </div>
         <div class="mt-2 flex gap-2 {theaterMode ? 'ml-7' : ''}">
           <div class="w-14">
-            <img
-              src={currentVideo.channel.snippet.thumbnails.default.url}
-              alt="channel avatar"
-              class="rounded-full" />
+            <a
+              href="http://youtube.com/channel/{currentVideo.channel.snippet.resourceId.channelId}"
+              target="_blank">
+              <img
+                src={currentVideo.channel.snippet.thumbnails.default.url}
+                alt="channel avatar"
+                class="rounded-full" />
+            </a>
           </div>
           <div>
-            <p class="text-lg font-bold text-zinc-400">{currentVideo.channel.snippet.title}</p>
+            <a
+              href="http://youtube.com/channel/{currentVideo.channel.snippet.resourceId.channelId}"
+              class="text-lg font-bold text-zinc-400 hover:underline"
+              target="_blank">{currentVideo.channel.snippet.title}</a>
             <p class="text-zinc-500">{moment(currentVideo.published).fromNow()}</p>
           </div>
         </div>
