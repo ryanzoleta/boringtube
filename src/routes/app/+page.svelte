@@ -7,6 +7,7 @@
   import IconTrash from '$lib/components/icons/IconTrash.svelte';
   import IconX from '$lib/components/icons/IconX.svelte';
   import Button from '$lib/components/ui/Button.svelte';
+  import FilterButton from '$lib/components/ui/FilterButton.svelte';
   import type { Subscription, Video } from '$lib/types.js';
   import { signOut } from '@auth/sveltekit/client';
   import { createInfiniteQuery, createQuery } from '@tanstack/svelte-query';
@@ -25,13 +26,6 @@
 
   let localAllVideos: Video[];
 
-  $: {
-    if (browser && localAllVideos) {
-      localStorage.setItem('all_videos', JSON.stringify(localAllVideos));
-      $videosQuery.refetch();
-    }
-  }
-
   const channelsQuery = createQuery({
     queryKey: ['channels'],
     queryFn: async () => {
@@ -43,9 +37,7 @@
   const allVideosQuery = createQuery({
     queryKey: ['all_videos'],
     queryFn: async () => {
-      const localAllVideoIds = localAllVideos.map((v) => {
-        return v.id;
-      });
+      const localAllVideoIds = localAllVideos.map((v) => v.id);
 
       let videos: Video[] = [];
 
@@ -65,19 +57,17 @@
         for (const entry of entries) {
           const videoId = entry.getElementsByTagName('yt:videoId')[0].innerHTML;
 
-          if (localAllVideoIds.includes(videoId)) {
-            continue;
+          if (!localAllVideoIds.includes(videoId)) {
+            videos.push({
+              id: videoId,
+              title: entry.getElementsByTagName('title')[0].innerHTML,
+              url: `https://www.youtube.com/watch?v=${videoId}`,
+              thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
+              channel: channel,
+              published: entry.getElementsByTagName('published')[0].innerHTML,
+              status: 'NEW'
+            });
           }
-
-          videos.push({
-            id: videoId,
-            title: entry.getElementsByTagName('title')[0].innerHTML,
-            url: `https://www.youtube.com/watch?v=${videoId}`,
-            thumbnail: `https://i.ytimg.com/vi/${videoId}/hq720.jpg`,
-            channel: channel,
-            published: entry.getElementsByTagName('published')[0].innerHTML,
-            status: 'NEW'
-          });
         }
       }
 
@@ -86,9 +76,9 @@
       return videos;
     },
     onSuccess: (data) => {
-      localAllVideos = [...data, ...localAllVideos].sort((a, b) => {
-        return a.published.localeCompare(b.published) * -1;
-      });
+      localAllVideos = [...data, ...localAllVideos].sort(
+        (a, b) => a.published.localeCompare(b.published) * -1
+      );
       console.log('Successfully saved', data.length, 'new videos');
     }
   });
@@ -141,6 +131,13 @@
     }
   }
 
+  $: {
+    if (browser && localAllVideos) {
+      localStorage.setItem('all_videos', JSON.stringify(localAllVideos));
+      $videosQuery.refetch();
+    }
+  }
+
   let observer: IntersectionObserver;
 
   onMount(() => {
@@ -163,8 +160,8 @@
     }, options);
 
     document.addEventListener('keyup', (event) => {
-      if (event.key === 'Escape') {
-        if (theaterMode) theaterMode = false;
+      if (event.key === 'Escape' && theaterMode) {
+        theaterMode = false;
       }
     });
   });
@@ -260,6 +257,7 @@
         on:click={signOut}>Logout</button>
     </div>
   </div>
+
   <div class="flex h-[92%]">
     <div class="flex md:w-4/12 2xl:w-3/12">
       <div class="flex w-20 flex-col gap-3 overflow-scroll bg-zinc-950 px-3 py-3">
@@ -292,27 +290,23 @@
         id="feedList">
         <div class="sticky top-0 z-50 flex flex-col gap-2 bg-zinc-950 py-5">
           <div class="flex gap-2">
-            <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'NEW'
-                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+            <FilterButton
+              selected={view === 'NEW'}
               on:click={() => {
                 view = 'NEW';
-              }}>New</button>
-            <button
-              class="truncate rounded-md px-4 py-1 transition duration-100 {view === 'WATCH_LATER'
-                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+              }}>New</FilterButton>
+
+            <FilterButton
+              selected={view === 'WATCH_LATER'}
               on:click={() => {
                 view = 'WATCH_LATER';
-              }}>Watch Later</button>
-            <button
-              class="rounded-md px-4 py-1 transition duration-100 {view === 'ARCHIVED'
-                ? 'bg-zinc-50 text-zinc-900 hover:bg-zinc-200'
-                : 'bg-zinc-700 text-white hover:bg-zinc-600'}"
+              }}>Watch Later</FilterButton>
+
+            <FilterButton
+              selected={view === 'ARCHIVED'}
               on:click={() => {
                 view = 'ARCHIVED';
-              }}>Archived</button>
+              }}>Archived</FilterButton>
 
             {#if view === 'NEW'}
               <button
