@@ -65,7 +65,6 @@ export const handle = SvelteKitAuth({
           }
         }
       }
-
       return session;
     }
   }
